@@ -187,6 +187,13 @@
     transition: transform .5s ease;
   }
   .card:hover .card-media::before{ transform: scale(1.06); }
+  .card-media.has-preview{
+    background-size: cover;
+    background-position: top center;
+  }
+  .card-media.has-preview::before{
+    background: linear-gradient(to top, rgba(8,10,10,0.75), rgba(8,10,10,0) 55%);
+  }
   .card-media .initial{
     position: relative;
     font-size: clamp(30px, 5vw, 54px);
@@ -275,6 +282,8 @@
   .gallery div{
     aspect-ratio: 4 / 3; border-radius: 12px;
     background: linear-gradient(160deg, var(--surface-hover), var(--bg-deep));
+    background-size: cover;
+    background-position: center;
     border: 1px solid var(--border);
   }
 
@@ -286,7 +295,18 @@
     padding: 10px 18px;
     border-radius: 999px;
     text-decoration: none;
-    transition: border-color .2s ease, background .2s ease, color .2s ease;
+    transition: border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+  .modal-links a.modal-link-live{
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 20px -6px var(--accent-glow);
+  }
+  .modal-links a.modal-link-live:hover{
+    background: #fff;
+    border-color: var(--accent);
+    color: var(--accent);
   }
   .modal-links a:hover{ background: var(--accent); border-color: var(--accent); color: #fff; }
 
@@ -346,14 +366,20 @@
 
     const PROJECTS = [
       {
-        id: 'örchiving',
-        title: 'Örchiving',
-        tagline: 'A public hub for archiving personal projects.',
+        id: 'meateat',
+        title: '믿먹(Meeateat)',
+        tagline: '믿고 먹을 수 있는 맛집 리뷰 사이트',
         status: 'in-progress',
         size: 'lg',
         tags: ['React', 'GSAP', 'Design'],
-        overview: 'A single place to collect every project I\'ve shipped, from quick prototypes to full builds. Started because my work was scattered across GitHub, Figma, and half-finished decks with no shared home.',
-        links: { github: '#', live: '#', prd: 'PRD.md' }
+        overview: '여행/외출을 계획하는 소비자가, 미리 맛집을 찾아 계획을 세울 때, 광고·가짜 리뷰 없는 신뢰할 수 있는 정보로 맛집을 발견할 수 있게 돕는 서비스',
+        preview: 'assets/previews/meateat-preview.jpg',
+        gallery: [
+          'assets/previews/meateat-detail-1.jpg',
+          'assets/previews/meateat-detail-2.jpg',
+          'assets/previews/meateat-detail-3.jpg'
+        ],
+        links: { github: '#', live: 'https://meeteat-teal.vercel.app', prd: 'PRD.md' }
       },
       {
         id: 'nocturne',
@@ -439,8 +465,8 @@
     function renderCards(){
       grid.innerHTML = PROJECTS.map((p) => `
         <article class="card size-${p.size}" data-id="${p.id}" data-tags="${p.tags.join(',')}">
-          <div class="card-media">
-            <span class="initial">${p.title.charAt(0)}</span>
+          <div class="card-media${p.preview ? ' has-preview' : ''}"${p.preview ? ` style="background-image: url('${p.preview}')"` : ''}>
+            ${p.preview ? '' : `<span class="initial">${p.title.charAt(0)}</span>`}
             <span class="status-pill ${p.status}">${statusLabel(p.status)}</span>
           </div>
           <div class="card-body">
@@ -486,10 +512,14 @@
       const p = PROJECTS.find((proj) => proj.id === id);
       if (!p) return;
 
-      const linkNames = { github: 'GitHub', live: 'Live Site', prd: 'PRD' };
+      const linkNames = { github: 'GitHub', live: 'Live Site →', prd: 'PRD' };
       const linksHtml = Object.entries(p.links)
-        .map(([key, href]) => `<a href="${href}" target="_blank" rel="noopener">${linkNames[key] || key}</a>`)
+        .map(([key, href]) => `<a href="${href}" target="_blank" rel="noopener" class="${key === 'live' ? 'modal-link-live' : ''}">${linkNames[key] || key}</a>`)
         .join('');
+
+      const galleryHtml = p.gallery && p.gallery.length
+        ? p.gallery.map((src) => `<div style="background-image:url('${src}')"></div>`).join('')
+        : '<div></div><div></div><div></div>';
 
       modal.innerHTML = `
         <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
@@ -502,7 +532,7 @@
         </div>
         <div class="modal-section">
           <h3>Gallery</h3>
-          <div class="gallery"><div></div><div></div><div></div></div>
+          <div class="gallery">${galleryHtml}</div>
         </div>
         <div class="modal-section">
           <h3>Links</h3>
