@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orchiving</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+  :root{
+    --bg: #171d1c;
+    --bg-deep: #101514;
+    --hill-color-1: #202b29;
+    --hill-color-2: #253130;
+    --fog-rgb: 30, 40, 39;
+    --wash-rgb: 0, 0, 0;
+    --accent: #5863f8;
+    --text-glow: 0 0 30px rgba(88, 99, 248, 0.5);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--accent);
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+      'Inter', 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  /* ---------- background scene ---------- */
+  .bg-scene{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  }
+
+  .bg-video{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(2px) saturate(0.85) brightness(1.05);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  .bg-video.is-ready{ opacity: 1; }
+
+  .hill{
+    position: absolute;
+    left: 50%;
+    border-radius: 50%;
+    filter: blur(60px);
+  }
+  .hill-1{ width: 90vmax; height: 40vmax; bottom: -22vmax; transform: translateX(-52%); background: radial-gradient(circle at 40% 30%, var(--hill-color-1), transparent 70%); opacity: 0.5; }
+  .hill-2{ width: 70vmax; height: 32vmax; bottom: -18vmax; transform: translateX(-44%); background: radial-gradient(circle at 60% 30%, var(--hill-color-2), transparent 70%); opacity: 0.55; }
+
+  .fog-layer{
+    position: absolute;
+    left: -20%;
+    width: 140%;
+    height: 40vmax;
+    background: linear-gradient(180deg, rgba(var(--fog-rgb), 0) 0%, rgba(var(--fog-rgb), 0.85) 55%, rgba(var(--fog-rgb), 0) 100%);
+    filter: blur(30px);
+    will-change: transform;
+  }
+  .fog-1{ top: 8%; height: 26vmax; opacity: 0.5; }
+  .fog-2{ top: 38%; height: 30vmax; opacity: 0.6; }
+  .fog-3{ bottom: 4%; height: 34vmax; opacity: 0.7; }
+
+  .white-wash{
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, rgba(var(--wash-rgb), 0.3) 0%, rgba(var(--wash-rgb), 0.65) 65%, rgba(var(--wash-rgb), 0.85) 100%);
+  }
+
+  /* ---------- content (no card / no boxed area) ---------- */
+  .intro{
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .eyebrow{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 22px;
+    opacity: 0;
+    text-shadow: var(--text-glow);
+  }
+  .eyebrow .dot{
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  .title{
+    margin: 0;
+    font-size: clamp(44px, 9vw, 108px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--accent);
+    perspective: 700px;
+    text-shadow: var(--text-glow);
+  }
+  .title .char{
+    display: inline-block;
+    transform-style: preserve-3d;
+  }
+
+  .tagline{
+    margin: 22px 0 0;
+    font-size: clamp(15px, 1.8vw, 19px);
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+    opacity: 0;
+    transform: translateY(8px);
+    text-shadow: var(--text-glow);
+  }
+
+  .click-hint{
+    margin-top: 48px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0;
+    text-shadow: var(--text-glow);
+  }
+
+  .visually-hidden{
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .corner-mark{
+    position: fixed;
+    left: 28px;
+    bottom: 22px;
+    z-index: 1;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    opacity: 0;
+    text-shadow: var(--text-glow);
+  }
+
+  .fade-veil{
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-scene">
+    <video class="bg-video" id="bgVideo" autoplay muted loop playsinline>
+      <!-- Add a real nature video source once ready: <source src="assets/nature-fog.mp4" type="video/mp4"> -->
+    </video>
+    <div class="hill hill-1"></div>
+    <div class="hill hill-2"></div>
+    <div class="fog-layer fog-1"></div>
+    <div class="fog-layer fog-2"></div>
+    <div class="fog-layer fog-3"></div>
+    <div class="white-wash"></div>
+  </div>
+
+  <main class="intro">
+    <h1 class="title" id="title">Örchiving</h1>
+    <p class="tagline">A quiet place for everything I've made.</p>
+    <span class="click-hint" id="clickHint">Click anywhere to enter</span>
+  </main>
+
+  <button type="button" id="enterProxy" class="visually-hidden">Go to project list</button>
+  <span class="corner-mark">ORCHIVING &copy; 2026</span>
+
+  <div class="fade-veil" id="veil"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function splitChars(el){
+      const text = el.textContent;
+      el.textContent = '';
+      el.setAttribute('aria-label', text);
+      return [...text].map((ch) => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = ch === ' ' ? ' ' : ch;
+        el.appendChild(span);
+        return span;
+      });
+    }
+
+    function animateTextIn(spans, { stagger = 0.035, duration = 0.9 } = {}){
+      if (prefersReducedMotion){
+        return gsap.timeline().to(spans, { opacity: 1, duration: 0.4 });
+      }
+      const tl = gsap.timeline();
+      tl.set(spans, { opacity: 0, yPercent: 130, rotateX: -80 });
+      tl.to(spans, {
+        opacity: 1,
+        yPercent: 0,
+        rotateX: 0,
+        duration,
+        ease: 'power4.out',
+        stagger
+      }, 0);
+      return tl;
+    }
+
+    function driftFog(){
+      if (prefersReducedMotion) return;
+      gsap.to('.fog-1', { x: 60, duration: 16, ease: 'sine.inOut', repeat: -1, yoyo: true });
+      gsap.to('.fog-2', { x: -70, duration: 20, ease: 'sine.inOut', repeat: -1, yoyo: true });
+      gsap.to('.fog-3', { x: 50, duration: 24, ease: 'sine.inOut', repeat: -1, yoyo: true });
+      gsap.to('.hill-1', { x: -30, duration: 22, ease: 'sine.inOut', repeat: -1, yoyo: true });
+      gsap.to('.hill-2', { x: 30, duration: 26, ease: 'sine.inOut', repeat: -1, yoyo: true });
+    }
+
+    function parallaxOnMouse(){
+      if (prefersReducedMotion) return;
+      const setX1 = gsap.quickTo('.fog-1', 'x', { duration: 1.6, ease: 'power3.out' });
+      const setX2 = gsap.quickTo('.fog-2', 'x', { duration: 1.8, ease: 'power3.out' });
+      const setTitleX = gsap.quickTo('.title', 'x', { duration: 1.2, ease: 'power3.out' });
+      const setTitleY = gsap.quickTo('.title', 'y', { duration: 1.2, ease: 'power3.out' });
+
+      window.addEventListener('mousemove', (e) => {
+        const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+        const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+        setX1(nx * 20);
+        setX2(nx * -16);
+        setTitleX(nx * 5);
+        setTitleY(ny * 5);
+      });
+    }
+
+    function pulseHint(){
+      if (prefersReducedMotion) return;
+      gsap.to('#clickHint', { opacity: 0.45, duration: 1.1, ease: 'sine.inOut', repeat: -1, yoyo: true });
+    }
+
+    function goToList(){
+      const exitTl = gsap.timeline();
+      exitTl
+        .to('.eyebrow, .title .char, .tagline, .click-hint', { opacity: 0, y: -14, duration: 0.4, stagger: 0.01, ease: 'power2.in' })
+        .to('.corner-mark', { opacity: 0, duration: 0.3 }, '<')
+        .to('#veil', { opacity: 1, duration: 0.55, ease: 'power2.inOut' }, '-=0.1')
+        .call(() => { window.location.href = 'list.html'; });
+    }
+
+    function init(){
+      const video = document.getElementById('bgVideo');
+      if (video.querySelector('source')) {
+        video.addEventListener('canplay', () => video.classList.add('is-ready'), { once: true });
+      }
+
+      const titleSpans = splitChars(document.getElementById('title'));
+
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      tl.to('.eyebrow', { opacity: 1, duration: 0.6 }, 0.15)
+        .add(animateTextIn(titleSpans), 0.35)
+        .to('.tagline', { opacity: 1, y: 0, duration: 0.7 }, '-=0.3')
+        .to('.click-hint', { opacity: 1, duration: 0.6 }, '-=0.3')
+        .to('.corner-mark', { opacity: 1, duration: 0.6 }, '-=0.4')
+        .call(pulseHint);
+
+      driftFog();
+      parallaxOnMouse();
+
+      let entered = false;
+      const enter = () => {
+        if (entered) return;
+        entered = true;
+        goToList();
+      };
+
+      document.body.addEventListener('click', enter);
+      document.getElementById('enterProxy').addEventListener('click', enter);
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') enter();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

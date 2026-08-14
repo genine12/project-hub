@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Process \"C:\\\\Users\\\\223\\\\Desktop\\\\my-intro\\\\03 day\\(project hub\\)\\\\index.html\")",
+      "PowerShell(Start-Process \"C:\\\\Users\\\\223\\\\Desktop\\\\my-intro\\\\03 day\\(project hub\\)\\\\list.html\")"
+    ]
+  }
+}

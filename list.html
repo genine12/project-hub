@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orchiving — Projects</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+  :root{
+    --bg: #171d1c;
+    --bg-deep: #101514;
+    --surface: #1e2625;
+    --surface-hover: #232c2b;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #f2f4f3;
+    --text-soft: #8b948f;
+    --accent: #5863f8;
+    --accent-glow: rgba(88, 99, 248, 0.45);
+    --hill-color-1: #202b29;
+    --hill-color-2: #253130;
+    --fog-rgb: 30, 40, 39;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    color: var(--text);
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+      'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* ---------- ambient background (same mood as intro) ---------- */
+  .bg-scene{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .hill{ position: absolute; left: 50%; border-radius: 50%; filter: blur(70px); }
+  .hill-1{ width: 80vmax; height: 36vmax; top: -20vmax; transform: translateX(-58%);
+    background: radial-gradient(circle at 40% 30%, var(--hill-color-1), transparent 70%); opacity: 0.6; }
+  .hill-2{ width: 60vmax; height: 30vmax; bottom: -18vmax; transform: translateX(-40%);
+    background: radial-gradient(circle at 60% 30%, var(--hill-color-2), transparent 70%); opacity: 0.5; }
+  .fog-layer{
+    position: absolute; left: -20%; width: 140%; height: 34vmax;
+    background: linear-gradient(180deg, rgba(var(--fog-rgb),0) 0%, rgba(var(--fog-rgb),0.7) 55%, rgba(var(--fog-rgb),0) 100%);
+    filter: blur(34px);
+  }
+  .fog-1{ top: 4%; opacity: 0.4; }
+  .fog-2{ top: 55%; opacity: 0.5; }
+
+  /* faint graph-paper grid behind the bento cards ("pinned to a moodboard" feel) */
+  .grid-paper{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 90%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 90%);
+  }
+
+  /* ---------- layout shell ---------- */
+  .page{ position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: 0 32px 120px; }
+
+  .topbar{
+    position: sticky; top: 0; z-index: 3;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+    padding: 28px 32px;
+    background: linear-gradient(180deg, rgba(23,29,28,0.55) 0%, rgba(23,29,28,0) 100%);
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+    transition: padding .35s ease, background .35s ease, box-shadow .35s ease, backdrop-filter .35s ease;
+  }
+  .topbar.is-scrolled{
+    padding: 14px 32px;
+    background: rgba(23,29,28,0.88);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 16px 36px -26px rgba(0,0,0,0.75);
+  }
+  .logo{
+    font-weight: 700; font-size: 18px; letter-spacing: -0.02em;
+    color: var(--text); text-decoration: none;
+    transition: font-size .35s ease;
+  }
+  .logo span{ color: var(--accent); }
+  .topbar.is-scrolled .logo{ font-size: 15px; }
+
+  .filters{
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;
+  }
+  .filter-pill{
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-soft);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color .25s ease, color .25s ease, background .25s ease, padding .35s ease, font-size .35s ease;
+  }
+  .topbar.is-scrolled .filter-pill{ padding: 6px 13px; font-size: 11px; }
+  .filter-pill:hover{ color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .filter-pill.active{
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .intro-line{ padding: 8px 0 40px; max-width: 560px; }
+  .intro-line h1{ margin: 0 0 10px; font-size: clamp(26px, 3vw, 34px); font-weight: 700; letter-spacing: -0.02em; }
+  .intro-line p{ margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.6; }
+
+  /* ---------- bento grid ---------- */
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 190px;
+    grid-auto-flow: dense;
+    gap: 22px;
+  }
+
+  .card{
+    position: relative;
+    grid-column: span 1;
+    grid-row: span 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: background .3s ease, box-shadow .3s ease, transform .3s ease;
+  }
+  .card.size-wide{ grid-column: span 2; }
+  .card.size-tall{ grid-row: span 2; }
+  .card.size-lg{ grid-column: span 2; grid-row: span 2; }
+
+  .card:hover{
+    background: var(--surface-hover);
+    transform: translateY(-6px);
+    box-shadow: 0 24px 48px -24px rgba(0,0,0,0.6), 0 0 0 1px rgba(88,99,248,0.25);
+  }
+
+  .card-media{
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    overflow: hidden;
+  }
+  .card-media::before{
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(88,99,248,0.35), transparent 55%),
+                linear-gradient(160deg, var(--surface-hover), var(--bg-deep));
+    transition: transform .5s ease;
+  }
+  .card:hover .card-media::before{ transform: scale(1.06); }
+  .card-media .initial{
+    position: relative;
+    font-size: clamp(30px, 5vw, 54px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.14);
+    line-height: 1;
+  }
+
+  .status-pill{
+    position: relative;
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.18);
+    color: var(--text-soft);
+    background: rgba(0,0,0,0.25);
+  }
+  .status-pill.in-progress{ color: var(--accent); border-color: var(--accent-glow); }
+
+  .card-body{ padding: 18px 20px 20px; }
+  .card-title{ margin: 0 0 6px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+  .card-tagline{ margin: 0 0 14px; font-size: 13px; color: var(--text-soft); line-height: 1.5; }
+  .card-tags{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag-chip{
+    font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+    color: var(--text-soft);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    padding: 4px 9px;
+    border-radius: 999px;
+  }
+
+  .card.is-hidden{ display: none; }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position: fixed; inset: 0; z-index: 10;
+    background: rgba(8, 10, 10, 0.72);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 32px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .modal-overlay.is-open{ pointer-events: auto; }
+
+  .modal{
+    width: 100%; max-width: 720px; max-height: 84vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    transform: scale(0.94) translateY(10px);
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.7);
+  }
+
+  .modal-close{
+    position: sticky; top: 0; float: right;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    color: var(--text-soft);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover{ color: var(--text); border-color: rgba(255,255,255,0.25); }
+
+  .modal-status{ margin-bottom: 14px; }
+  .modal h2{ margin: 0 0 10px; font-size: clamp(24px, 3vw, 32px); letter-spacing: -0.02em; clear: both; }
+  .modal .modal-tagline{ margin: 0 0 24px; color: var(--text-soft); font-size: 14px; }
+  .modal-section{ margin-bottom: 28px; }
+  .modal-section h3{
+    margin: 0 0 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+  }
+  .modal-section p{ margin: 0; font-size: 14px; line-height: 1.7; color: var(--text-soft); }
+
+  .gallery{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gallery div{
+    aspect-ratio: 4 / 3; border-radius: 12px;
+    background: linear-gradient(160deg, var(--surface-hover), var(--bg-deep));
+    border: 1px solid var(--border);
+  }
+
+  .modal-links{ display: flex; flex-wrap: wrap; gap: 10px; }
+  .modal-links a{
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: border-color .2s ease, background .2s ease, color .2s ease;
+  }
+  .modal-links a:hover{ background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  @media (max-width: 860px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+    .card.size-wide, .card.size-lg{ grid-column: span 2; }
+    .topbar{ flex-direction: column; align-items: flex-start; gap: 14px; }
+    .filters{ justify-content: flex-start; }
+  }
+  @media (max-width: 520px){
+    .page{ padding: 0 18px 90px; }
+    .grid{ grid-template-columns: 1fr; gap: 16px; }
+    .card.size-wide, .card.size-lg{ grid-column: span 1; }
+    .gallery{ grid-template-columns: repeat(2, 1fr); }
+    .modal{ padding: 28px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-scene">
+    <div class="hill hill-1"></div>
+    <div class="hill hill-2"></div>
+    <div class="fog-layer fog-1"></div>
+    <div class="fog-layer fog-2"></div>
+  </div>
+  <div class="grid-paper"></div>
+
+  <div class="page">
+    <header class="topbar">
+      <a class="logo" href="index.html">Or<span>chiving</span></a>
+      <nav class="filters" id="filters"></nav>
+    </header>
+
+    <div class="intro-line">
+      <h1>Projects</h1>
+      <p>A running archive of things I've built — product experiments, design systems, and interface studies.</p>
+    </div>
+
+    <main class="grid" id="grid"></main>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
+  <script>
+    gsap.registerPlugin(Flip);
+
+    const PROJECTS = [
+      {
+        id: 'orchiving',
+        title: 'Orchiving',
+        tagline: 'A public hub for archiving personal projects.',
+        status: 'in-progress',
+        size: 'lg',
+        tags: ['React', 'GSAP', 'Design'],
+        overview: 'A single place to collect every project I\'ve shipped, from quick prototypes to full builds. Started because my work was scattered across GitHub, Figma, and half-finished decks with no shared home.',
+        links: { github: '#', live: '#', prd: 'PRD.md' }
+      },
+      {
+        id: 'nocturne',
+        title: 'Nocturne UI Kit',
+        tagline: 'A dark-first component library built for late-night dashboards.',
+        status: 'completed',
+        size: 'wide',
+        tags: ['Figma', 'Design System'],
+        overview: 'A reusable set of components and tokens designed around low-light environments, built to keep contrast readable without ever feeling harsh.',
+        links: { github: '#', live: '#' }
+      },
+      {
+        id: 'fieldnotes',
+        title: 'Fieldnotes',
+        tagline: 'A lightweight note-taking app for research sprints.',
+        status: 'completed',
+        size: 'sm',
+        tags: ['React', 'Node.js'],
+        overview: 'Built to capture fast, unstructured notes during user interviews and turn them into shareable summaries without extra formatting steps.',
+        links: { github: '#', live: '#' }
+      },
+      {
+        id: 'bubble-crm',
+        title: 'Bubble CRM Prototype',
+        tagline: 'A no-code CRM prototype for a small studio team.',
+        status: 'completed',
+        size: 'tall',
+        tags: ['Bubble', 'No-code'],
+        overview: 'Prototyped a lightweight CRM in Bubble to validate a workflow before committing to custom development — client intake, status tracking, and reminders.',
+        links: { live: '#' }
+      },
+      {
+        id: 'motion-playground',
+        title: 'Motion Playground',
+        tagline: 'A sandbox for GSAP-driven interface motion experiments.',
+        status: 'in-progress',
+        size: 'sm',
+        tags: ['GSAP', 'JavaScript'],
+        overview: 'An ongoing collection of small motion studies — scroll reveals, text effects, and transition patterns — used as a reference library for future projects.',
+        links: { github: '#' }
+      },
+      {
+        id: 'studio-refresh',
+        title: 'Studio Site Refresh',
+        tagline: 'A brand and site refresh for a small design studio.',
+        status: 'completed',
+        size: 'wide',
+        tags: ['Webflow', 'Branding'],
+        overview: 'Reworked the studio\'s site structure and visual identity to better reflect their shift toward product design work.',
+        links: { live: '#' }
+      },
+      {
+        id: 'dataviz-sandbox',
+        title: 'Data Viz Sandbox',
+        tagline: 'Exploring charting patterns beyond default library styles.',
+        status: 'in-progress',
+        size: 'sm',
+        tags: ['D3.js', 'React'],
+        overview: 'A set of custom chart components built from scratch to move away from default library aesthetics while staying accessible.',
+        links: { github: '#' }
+      },
+      {
+        id: 'type-lab',
+        title: 'Type Lab',
+        tagline: 'Typographic pairings and scale systems for product UI.',
+        status: 'completed',
+        size: 'sm',
+        tags: ['Typography', 'Figma'],
+        overview: 'A working file of type scale and pairing experiments used to standardize headings and body text across projects.',
+        links: { live: '#' }
+      }
+    ];
+
+    const grid = document.getElementById('grid');
+    const filtersEl = document.getElementById('filters');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modal = document.getElementById('modal');
+
+    function statusLabel(status){
+      return status === 'in-progress' ? 'In Progress' : 'Completed';
+    }
+
+    function renderCards(){
+      grid.innerHTML = PROJECTS.map((p) => `
+        <article class="card size-${p.size}" data-id="${p.id}" data-tags="${p.tags.join(',')}">
+          <div class="card-media">
+            <span class="initial">${p.title.charAt(0)}</span>
+            <span class="status-pill ${p.status}">${statusLabel(p.status)}</span>
+          </div>
+          <div class="card-body">
+            <h2 class="card-title">${p.title}</h2>
+            <p class="card-tagline">${p.tagline}</p>
+            <div class="card-tags">${p.tags.map((t) => `<span class="tag-chip">${t}</span>`).join('')}</div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function renderFilters(){
+      const tags = ['All', ...new Set(PROJECTS.flatMap((p) => p.tags))];
+      filtersEl.innerHTML = tags.map((t, i) => `
+        <button class="filter-pill${i === 0 ? ' active' : ''}" data-tag="${t}">${t}</button>
+      `).join('');
+    }
+
+    function applyFilter(tag){
+      const cards = [...document.querySelectorAll('.card')];
+      const state = Flip.getState(cards);
+
+      cards.forEach((card) => {
+        const tags = card.dataset.tags.split(',');
+        const match = tag === 'All' || tags.includes(tag);
+        card.classList.toggle('is-hidden', !match);
+      });
+
+      Flip.from(state, {
+        duration: 0.6,
+        ease: 'power2.inOut',
+        absolute: true,
+        stagger: 0.02,
+        onEnter: (elements) => gsap.fromTo(elements,
+          { opacity: 0, scale: 0.94 },
+          { opacity: 1, scale: 1, duration: 0.45, ease: 'power2.out' }),
+        onLeave: (elements) => gsap.to(elements,
+          { opacity: 0, scale: 0.94, duration: 0.3, ease: 'power2.in' })
+      });
+    }
+
+    function openModal(id){
+      const p = PROJECTS.find((proj) => proj.id === id);
+      if (!p) return;
+
+      const linkNames = { github: 'GitHub', live: 'Live Site', prd: 'PRD' };
+      const linksHtml = Object.entries(p.links)
+        .map(([key, href]) => `<a href="${href}" target="_blank" rel="noopener">${linkNames[key] || key}</a>`)
+        .join('');
+
+      modal.innerHTML = `
+        <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+        <span class="status-pill modal-status ${p.status}">${statusLabel(p.status)}</span>
+        <h2>${p.title}</h2>
+        <p class="modal-tagline">${p.tagline}</p>
+        <div class="modal-section">
+          <h3>Overview</h3>
+          <p>${p.overview}</p>
+        </div>
+        <div class="modal-section">
+          <h3>Gallery</h3>
+          <div class="gallery"><div></div><div></div><div></div></div>
+        </div>
+        <div class="modal-section">
+          <h3>Links</h3>
+          <div class="modal-links">${linksHtml}</div>
+        </div>
+      `;
+
+      document.getElementById('modalClose').addEventListener('click', closeModal);
+      modalOverlay.classList.add('is-open');
+      gsap.to(modalOverlay, { opacity: 1, duration: 0.3, ease: 'power2.out' });
+      gsap.to(modal, { scale: 1, y: 0, duration: 0.4, ease: 'power3.out' });
+    }
+
+    function closeModal(){
+      gsap.to(modal, { scale: 0.94, y: 10, duration: 0.25, ease: 'power2.in' });
+      gsap.to(modalOverlay, {
+        opacity: 0, duration: 0.25, ease: 'power2.in',
+        onComplete: () => modalOverlay.classList.remove('is-open')
+      });
+    }
+
+    function init(){
+      renderFilters();
+      renderCards();
+
+      gsap.from('.topbar', { opacity: 0, y: -16, duration: 0.6, ease: 'power2.out' });
+      gsap.from('.intro-line', { opacity: 0, y: 16, duration: 0.6, delay: 0.1, ease: 'power2.out' });
+      gsap.to('.card', {
+        opacity: 1, y: 0, duration: 0.6, ease: 'power2.out',
+        stagger: 0.06, delay: 0.25
+      });
+
+      filtersEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.filter-pill');
+        if (!btn) return;
+        document.querySelectorAll('.filter-pill').forEach((el) => el.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilter(btn.dataset.tag);
+      });
+
+      grid.addEventListener('click', (e) => {
+        const card = e.target.closest('.card');
+        if (card) openModal(card.dataset.id);
+      });
+
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalOverlay.classList.contains('is-open')) closeModal();
+      });
+
+      const topbar = document.querySelector('.topbar');
+      let scrolled = false;
+      window.addEventListener('scroll', () => {
+        const shouldShrink = window.scrollY > 40;
+        if (shouldShrink !== scrolled){
+          scrolled = shouldShrink;
+          topbar.classList.toggle('is-scrolled', scrolled);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
